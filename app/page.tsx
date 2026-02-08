@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { ChevronUp, ChevronDown, BarChart2, ChevronLeft, ChevronRight, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
+import { Slider } from "@/components/ui/slider"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -28,6 +29,7 @@ export default function BingoLoto() {
   const [isEraseMode, setIsEraseMode] = useState({ loto: false, bingo: false })
   const [statistics, setStatistics] = useState<{ [key: number]: number }>({})
   const [isIndicatorRed, setIsIndicatorRed] = useState(false)
+  const [indicatorTimeout, setIndicatorTimeout] = useState(5000)
   const lastNumberRef = useRef<HTMLDivElement>(null)
   const indicatorTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -80,6 +82,11 @@ export default function BingoLoto() {
         "1": { loto: [], lastLoto: null },
       })
     }
+
+    const savedTimeout = localStorage.getItem("indicatorTimeout")
+    if (savedTimeout) {
+      setIndicatorTimeout(Number(savedTimeout))
+    }
   }, [])
 
   // Sauvegarder l'état du jeu à chaque changement
@@ -116,7 +123,7 @@ export default function BingoLoto() {
     // Repasser au vert après 5 secondes
     indicatorTimeoutRef.current = setTimeout(() => {
       setIsIndicatorRed(false)
-    }, 5000)
+    }, indicatorTimeout)
   }
 
   // Gérer le clic sur un numéro
@@ -256,6 +263,13 @@ export default function BingoLoto() {
   // Réinitialiser les statistiques
   const resetStatistics = () => {
     setStatistics({})
+  }
+
+  // Gérer le changement du timeout de l'indicateur
+  const handleIndicatorTimeoutChange = (value: number[]) => {
+    const ms = value[0] * 1000
+    setIndicatorTimeout(ms)
+    localStorage.setItem("indicatorTimeout", ms.toString())
   }
 
   // Télécharger les statistiques au format CSV
@@ -472,6 +486,21 @@ export default function BingoLoto() {
                       <Label htmlFor="view-mode" className="text-sm">
                         {isAlternativeView ? "10/ligne" : "15/ligne"}
                       </Label>
+                    </div>
+
+                    <div className="flex items-center space-x-2 mb-2">
+                      <Label className="text-sm whitespace-nowrap">Indicateur:</Label>
+                      <Slider
+                        min={1}
+                        max={15}
+                        step={1}
+                        value={[indicatorTimeout / 1000]}
+                        onValueChange={handleIndicatorTimeoutChange}
+                        className="flex-1"
+                      />
+                      <span className="text-sm font-medium w-6 text-right">
+                        {indicatorTimeout / 1000}s
+                      </span>
                     </div>
 
                     <Dialog>

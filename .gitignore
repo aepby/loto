@@ -75,3 +75,7 @@ pnpm-debug.log*
 
 # turbo
 .turbo
+
+# prisma
+*.db-journal
+lib/generated/

@@ -1,6 +1,7 @@
 import type React from "react"
 import "@/app/globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
+import { AuthHeader } from "@/components/auth-header"
 
 export const metadata = {
   title: "Bingo / Loto",
@@ -17,6 +18,7 @@ export default function RootLayout({
     <html lang="fr" suppressHydrationWarning>
       <body>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+          <AuthHeader />
           {children}
         </ThemeProvider>
       </body>
