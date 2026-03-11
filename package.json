@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && prisma migrate deploy && next build",
+    "build": "prisma generate && prisma migrate deploy && npx prisma db seed && next build",
     "postinstall": "prisma generate",
     "start": "next start",
     "lint": "next lint"
@@ -68,7 +68,7 @@
     "zod": "^4.1.13"
   },
   "prisma": {
-    "seed": "npx tsx prisma/seed.ts"
+    "seed": "npx tsx prisma/seed.mts"
   },
   "devDependencies": {
     "@types/bcryptjs": "^3.0.0",
