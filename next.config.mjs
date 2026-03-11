@@ -9,9 +9,6 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  outputFileTracingIncludes: {
-    "/api/**": ["./dev.db"],
-  },
 }
 
 export default nextConfig
