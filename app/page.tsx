@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { ChevronUp, ChevronDown, BarChart2, ChevronLeft, ChevronRight, Download } from "lucide-react"
+import { ChevronUp, ChevronDown, BarChart2, ChevronLeft, ChevronRight, Download, Upload } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Slider } from "@/components/ui/slider"
@@ -32,6 +32,8 @@ export default function BingoLoto() {
   const [indicatorTimeout, setIndicatorTimeout] = useState(5000)
   const lastNumberRef = useRef<HTMLDivElement>(null)
   const indicatorTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const csvInputRef = useRef<HTMLInputElement>(null)
+  const csvMergeModeRef = useRef<"replace" | "merge">("replace")
 
   // Obtenir les données de la partie actuelle
   const getCurrentGameData = (): GameData => {
@@ -270,6 +272,52 @@ export default function BingoLoto() {
     const ms = value[0] * 1000
     setIndicatorTimeout(ms)
     localStorage.setItem("indicatorTimeout", ms.toString())
+  }
+
+  // Importer les statistiques depuis un CSV
+  const handleImportCSV = (mode: "replace" | "merge") => {
+    csvMergeModeRef.current = mode
+    csvInputRef.current?.click()
+  }
+
+  const processCSVImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const text = event.target?.result as string
+      const lines = text.trim().split("\n")
+      const newStats: { [key: number]: number } = {}
+
+      // Skip header line (Numéro,Nombre de tirages)
+      for (let i = 1; i < lines.length; i++) {
+        const parts = lines[i].split(",")
+        if (parts.length >= 2) {
+          const num = parseInt(parts[0].trim(), 10)
+          const count = parseInt(parts[1].trim(), 10)
+          if (!isNaN(num) && !isNaN(count) && num >= 1 && num <= 90) {
+            newStats[num] = count
+          }
+        }
+      }
+
+      if (csvMergeModeRef.current === "replace") {
+        setStatistics(newStats)
+      } else {
+        setStatistics((prev) => {
+          const merged = { ...prev }
+          Object.entries(newStats).forEach(([key, value]) => {
+            const num = parseInt(key)
+            merged[num] = (merged[num] || 0) + value
+          })
+          return merged
+        })
+      }
+    }
+    reader.readAsText(file)
+    // Reset so the same file can be re-selected
+    e.target.value = ""
   }
 
   // Télécharger les statistiques au format CSV
@@ -522,6 +570,13 @@ export default function BingoLoto() {
                             </div>
                           ))}
                         </div>
+                        <input
+                          ref={csvInputRef}
+                          type="file"
+                          accept=".csv"
+                          className="hidden"
+                          onChange={processCSVImport}
+                        />
                         <div className="flex gap-2 mt-4">
                           <Button variant="outline" onClick={downloadStatistics} className="flex-1">
                             <Download className="mr-2 h-4 w-4" />
@@ -529,6 +584,16 @@ export default function BingoLoto() {
                           </Button>
                           <Button variant="destructive" onClick={resetStatistics} className="flex-1">
                             Réinitialiser
+                          </Button>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button variant="outline" onClick={() => handleImportCSV("replace")} className="flex-1">
+                            <Upload className="mr-2 h-4 w-4" />
+                            Importer (remplacer)
+                          </Button>
+                          <Button variant="outline" onClick={() => handleImportCSV("merge")} className="flex-1">
+                            <Upload className="mr-2 h-4 w-4" />
+                            Importer (additionner)
                           </Button>
                         </div>
                       </DialogContent>

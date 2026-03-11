@@ -27,7 +27,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { ArrowLeft, Trash2, UserPlus } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { ArrowLeft, KeyRound, Trash2, UserPlus } from "lucide-react"
 
 type User = {
   id: number
@@ -50,6 +56,16 @@ export default function AdminPage() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [pwDialog, setPwDialog] = useState<{
+    open: boolean
+    userId: number | null
+    username: string
+    isOwnAccount: boolean
+  }>({ open: false, userId: null, username: "", isOwnAccount: false })
+  const [pwCurrent, setPwCurrent] = useState("")
+  const [pwNew, setPwNew] = useState("")
+  const [pwError, setPwError] = useState("")
+  const [pwLoading, setPwLoading] = useState(false)
   const router = useRouter()
 
   const fetchUsers = async () => {
@@ -100,6 +116,54 @@ export default function AdminPage() {
       setError("Erreur lors de la création.")
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const openPwDialog = (user: User) => {
+    setPwDialog({
+      open: true,
+      userId: user.id,
+      username: user.username,
+      isOwnAccount: user.id === currentUser?.id,
+    })
+    setPwCurrent("")
+    setPwNew("")
+    setPwError("")
+  }
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setPwError("")
+    setPwLoading(true)
+
+    try {
+      let res: Response
+
+      if (pwDialog.isOwnAccount) {
+        res = await fetch("/api/auth/change-password", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ currentPassword: pwCurrent, newPassword: pwNew }),
+        })
+      } else {
+        res = await fetch(`/api/admin/users/${pwDialog.userId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ newPassword: pwNew }),
+        })
+      }
+
+      const data = await res.json()
+      if (!res.ok) {
+        setPwError(data.error)
+        return
+      }
+
+      setPwDialog({ open: false, userId: null, username: "", isOwnAccount: false })
+    } catch {
+      setPwError("Erreur lors du changement de mot de passe.")
+    } finally {
+      setPwLoading(false)
     }
   }
 
@@ -206,8 +270,13 @@ export default function AdminPage() {
                     <TableCell>
                       {new Date(user.createdAt).toLocaleDateString("fr-FR")}
                     </TableCell>
-                    <TableCell className="text-right">
-                      {currentUser && user.id !== currentUser.id && (
+                    <TableCell className="text-right space-x-2">
+                      {currentUser && (currentUser.isAdmin || user.id === currentUser.id) && (
+                        <Button variant="outline" size="sm" onClick={() => openPwDialog(user)}>
+                          <KeyRound className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {currentUser && currentUser.isAdmin && user.id !== currentUser.id && (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button variant="destructive" size="sm">
@@ -239,6 +308,58 @@ export default function AdminPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Password change dialog */}
+      <Dialog
+        open={pwDialog.open}
+        onOpenChange={(open) => setPwDialog((prev) => ({ ...prev, open }))}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Changer le mot de passe — {pwDialog.username}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleChangePassword} className="space-y-4">
+            {pwDialog.isOwnAccount && (
+              <div className="space-y-2">
+                <Label htmlFor="pw-current">Mot de passe actuel</Label>
+                <Input
+                  id="pw-current"
+                  type="password"
+                  value={pwCurrent}
+                  onChange={(e) => setPwCurrent(e.target.value)}
+                  required
+                />
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="pw-new">Nouveau mot de passe</Label>
+              <Input
+                id="pw-new"
+                type="password"
+                value={pwNew}
+                onChange={(e) => setPwNew(e.target.value)}
+                placeholder="min. 8 caractères"
+                required
+              />
+            </div>
+            {pwError && <p className="text-sm text-red-500">{pwError}</p>}
+            <div className="flex gap-2 justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setPwDialog((prev) => ({ ...prev, open: false }))}
+              >
+                Annuler
+              </Button>
+              <Button type="submit" disabled={pwLoading}>
+                {pwLoading ? "Modification..." : "Modifier"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
