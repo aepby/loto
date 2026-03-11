@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs"
 
 const adapter = new PrismaPg({
   connectionString: process.env.POSTGRES_URL_NON_POOLING!,
+  ssl: { rejectUnauthorized: false },
 })
 
 const prisma = new PrismaClient({ adapter })
