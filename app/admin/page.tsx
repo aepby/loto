@@ -33,12 +33,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Switch } from "@/components/ui/switch"
 import { ArrowLeft, KeyRound, Trash2, UserPlus } from "lucide-react"
 
 type User = {
   id: number
   username: string
   isAdmin: boolean
+  isActive: boolean
   createdAt: string
 }
 
@@ -116,6 +118,19 @@ export default function AdminPage() {
       setError("Erreur lors de la création.")
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleToggleActive = async (user: User) => {
+    try {
+      await fetch(`/api/admin/users/${user.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: !user.isActive }),
+      })
+      fetchUsers()
+    } catch {
+      // Silently fail
     }
   }
 
@@ -254,6 +269,7 @@ export default function AdminPage() {
                 <TableRow>
                   <TableHead>Nom d&apos;utilisateur</TableHead>
                   <TableHead>Rôle</TableHead>
+                  <TableHead>Actif</TableHead>
                   <TableHead>Créé le</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -266,6 +282,16 @@ export default function AdminPage() {
                       <Badge variant={user.isAdmin ? "default" : "secondary"}>
                         {user.isAdmin ? "Admin" : "Utilisateur"}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {user.isAdmin ? (
+                        <span className="text-sm text-muted-foreground">—</span>
+                      ) : (
+                        <Switch
+                          checked={user.isActive}
+                          onCheckedChange={() => handleToggleActive(user)}
+                        />
+                      )}
                     </TableCell>
                     <TableCell>
                       {new Date(user.createdAt).toLocaleDateString("fr-FR")}

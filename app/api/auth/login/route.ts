@@ -43,6 +43,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (!user.isActive) {
+      return NextResponse.json(
+        { error: "Ce compte a été désactivé." },
+        { status: 403 }
+      )
+    }
+
     const token = await signToken({
       userId: user.id,
       username: user.username,

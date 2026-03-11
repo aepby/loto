@@ -47,6 +47,47 @@ export async function PATCH(
   }
 }
 
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await getSession()
+  if (!session || !session.isAdmin) {
+    return NextResponse.json({ error: "Accès refusé." }, { status: 403 })
+  }
+
+  const { id } = await params
+  const userId = parseInt(id, 10)
+
+  if (isNaN(userId)) {
+    return NextResponse.json({ error: "ID invalide." }, { status: 400 })
+  }
+
+  try {
+    const { isActive } = await request.json()
+    if (typeof isActive !== "boolean") {
+      return NextResponse.json({ error: "Valeur invalide." }, { status: 400 })
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } })
+    if (!user) {
+      return NextResponse.json({ error: "Utilisateur non trouvé." }, { status: 404 })
+    }
+    if (user.isAdmin) {
+      return NextResponse.json({ error: "Impossible de désactiver un administrateur." }, { status: 400 })
+    }
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { isActive },
+    })
+
+    return NextResponse.json({ success: true })
+  } catch {
+    return NextResponse.json({ error: "Erreur interne du serveur." }, { status: 500 })
+  }
+}
+
 export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

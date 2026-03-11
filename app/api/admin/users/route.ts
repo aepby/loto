@@ -29,6 +29,7 @@ export async function GET() {
       id: true,
       username: true,
       isAdmin: true,
+      isActive: true,
       createdAt: true,
     },
     orderBy: { createdAt: "asc" },
