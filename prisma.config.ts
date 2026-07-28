@@ -5,10 +5,11 @@ export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
-    seed: "npx tsx prisma/seed.mts",
+    seed: "npx tsx prisma/seed.ts",
   },
   datasource: {
-    // Direct connection (no pooling) required for schema operations
-    url: process.env["POSTGRES_URL_NON_POOLING"],
+    // Only read by CLI commands that reach the database (migrate, db push, studio);
+    // `prisma generate` must keep working without it, hence the empty fallback.
+    url: process.env.DATABASE_URL ?? "",
   },
 })

@@ -1,17 +1,12 @@
-// Required for Supabase SSL certificates in serverless environments
-if (process.env.NODE_ENV === "production") {
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
-}
 import { PrismaClient } from "@prisma/client"
-import { PrismaPg } from "@prisma/adapter-pg"
-import pg from "pg"
+import { PrismaMariaDb } from "@prisma/adapter-mariadb"
+import { parseDatabaseUrl } from "./db-config"
 
-const pool = new pg.Pool({
-  connectionString: process.env.POSTGRES_PRISMA_URL!,
-  ssl: { rejectUnauthorized: false },
-})
+const { poolConfig, database } = parseDatabaseUrl()
 
-const adapter = new PrismaPg(pool)
+// The pool is only opened on the first query, so importing this module during the
+// Next.js build does not require a reachable database.
+const adapter = new PrismaMariaDb(poolConfig, { database })
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined

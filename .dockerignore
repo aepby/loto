@@ -1,0 +1,30 @@
+.git
+.gitignore
+node_modules
+.next
+out
+build
+dist
+
+# Secrets must come from the runtime environment, never from the image.
+.env
+.env.*
+!.env.example
+
+# Legacy SQLite database, unused since the MariaDB migration.
+dev.db
+*.db-journal
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+README.md
+.vercel
+*.tsbuildinfo
