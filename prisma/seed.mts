@@ -6,9 +6,13 @@ import { PrismaPg } from "@prisma/adapter-pg"
 import pg from "pg"
 import bcrypt from "bcryptjs"
 
+const isSsl =
+  process.env.POSTGRES_SSL === "true" ||
+  Boolean(process.env.POSTGRES_URL_NON_POOLING?.includes("sslmode=require"))
+
 const pool = new pg.Pool({
   connectionString: process.env.POSTGRES_URL_NON_POOLING!,
-  ssl: { rejectUnauthorized: false },
+  ssl: isSsl ? { rejectUnauthorized: false } : false,
 })
 
 const adapter = new PrismaPg(pool)

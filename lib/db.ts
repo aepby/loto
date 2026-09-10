@@ -6,9 +6,13 @@ import { PrismaClient } from "@prisma/client"
 import { PrismaPg } from "@prisma/adapter-pg"
 import pg from "pg"
 
+const isSsl =
+  process.env.POSTGRES_SSL === "true" ||
+  Boolean(process.env.POSTGRES_PRISMA_URL?.includes("sslmode=require"))
+
 const pool = new pg.Pool({
   connectionString: process.env.POSTGRES_PRISMA_URL!,
-  ssl: { rejectUnauthorized: false },
+  ssl: isSsl ? { rejectUnauthorized: false } : false,
 })
 
 const adapter = new PrismaPg(pool)

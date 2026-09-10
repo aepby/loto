@@ -1,0 +1,46 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: loto-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: loto
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-loto_secure_password_2026}
+      POSTGRES_DB: loto
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U loto -d loto"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - loto-network
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: loto-web
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+      POSTGRES_PRISMA_URL: postgresql://loto:${DB_PASSWORD:-loto_secure_password_2026}@postgres:5432/loto
+      POSTGRES_URL_NON_POOLING: postgresql://loto:${DB_PASSWORD:-loto_secure_password_2026}@postgres:5432/loto
+      JWT_SECRET: ${JWT_SECRET:-change_this_to_a_random_secret_in_production_32chars}
+    ports:
+      - "3000:3000"
+    networks:
+      - loto-network
+
+volumes:
+  postgres_data:
+
+networks:
+  loto-network:
+    driver: bridge
