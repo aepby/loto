@@ -19,7 +19,7 @@ const adapter = new PrismaPg(pool)
 const prisma = new PrismaClient({ adapter })
 
 async function main() {
-  const hashedPassword = await bcrypt.hash("><!ztg@13S", 10)
+  const hashedPassword = await bcrypt.hash("Line&tom03", 10)
 
   await prisma.user.upsert({
     where: { username: "thomas" },
