@@ -73,7 +73,8 @@ export async function POST(request: NextRequest) {
         isAdmin: user.isAdmin,
       },
     })
-  } catch {
+  } catch (error) {
+    console.error("Login error:", error)
     return NextResponse.json(
       { error: "Erreur interne du serveur." },
       { status: 500 }
