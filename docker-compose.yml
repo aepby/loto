@@ -1,3 +1,16 @@
+# ---------------------------------------------------------------------------
+# Self-hosted deployment: everything is configured directly in this file.
+# No .env file is needed. Before the first `docker compose up -d --build`,
+# edit the values marked "CHANGE ME" below:
+#
+#   1. Database password  -> must be IDENTICAL in the 3 places marked (1) (2) (3)
+#   2. JWT_SECRET         -> any random string of at least 32 characters
+#                            (e.g. `openssl rand -base64 32`)
+#
+# Changing the database password after the first start requires resetting the
+# volume (`docker compose down -v`), because Postgres only reads it on init.
+# ---------------------------------------------------------------------------
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -5,7 +18,7 @@ services:
     restart: always
     environment:
       POSTGRES_USER: loto
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-loto_secure_password_2026}
+      POSTGRES_PASSWORD: loto_secure_password_2026            # CHANGE ME (1)
       POSTGRES_DB: loto
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -30,9 +43,12 @@ services:
       NODE_ENV: production
       PORT: 3000
       HOSTNAME: 0.0.0.0
-      POSTGRES_PRISMA_URL: postgresql://loto:${DB_PASSWORD:-loto_secure_password_2026}@postgres:5432/loto
-      POSTGRES_URL_NON_POOLING: postgresql://loto:${DB_PASSWORD:-loto_secure_password_2026}@postgres:5432/loto
-      JWT_SECRET: ${JWT_SECRET:-change_this_to_a_random_secret_in_production_32chars}
+      # Connection strings: format is postgresql://USER:PASSWORD@HOST:PORT/DB
+      # The password must match POSTGRES_PASSWORD of the postgres service.
+      POSTGRES_PRISMA_URL: postgresql://loto:loto_secure_password_2026@postgres:5432/loto        # CHANGE ME (2)
+      POSTGRES_URL_NON_POOLING: postgresql://loto:loto_secure_password_2026@postgres:5432/loto   # CHANGE ME (3)
+      # Secret used to sign the authentication cookies (min. 32 characters)
+      JWT_SECRET: change_this_to_a_random_secret_in_production_32chars                           # CHANGE ME
     ports:
       - "3000:3000"
     networks:
